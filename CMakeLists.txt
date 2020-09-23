@@ -173,16 +173,18 @@ endif ( )
 message ( STATUS "CMAKE build type:          " ${CMAKE_BUILD_TYPE} )
 
 if ( ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    message ( STATUS "CMAKE C Flags debug:       " ${CMAKE_C_FLAGS_DEBUG} )
+    message ( STATUS "CMAKE C Flags debug:          " ${CMAKE_C_FLAGS_DEBUG} )
+elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+    message ( STATUS "CMAKE C Flags relwithdebinfo: " ${CMAKE_C_FLAGS_RELWITHDEBINFO} )
 else ( )
-    message ( STATUS "CMAKE C Flags release:     " ${CMAKE_C_FLAGS_RELEASE} )
+    message ( STATUS "CMAKE C Flags release:        " ${CMAKE_C_FLAGS_RELEASE} )
 endif ( )
 
-message ( STATUS "CMAKE compiler ID:         " ${CMAKE_C_COMPILER_ID} )
-message ( STATUS "CMAKE thread library:      " ${CMAKE_THREAD_LIBS_INIT} )
-message ( STATUS "CMAKE have pthreads:       " ${CMAKE_USE_PTHREADS_INIT}  )
-message ( STATUS "CMAKE have Win32 pthreads: " ${CMAKE_USE_WIN32_THREADS_INIT} )
-message ( STATUS "CMAKE have OpenMP:         " ${OPENMP_FOUND} )
+message ( STATUS "CMAKE compiler ID:            " ${CMAKE_C_COMPILER_ID} )
+message ( STATUS "CMAKE thread library:         " ${CMAKE_THREAD_LIBS_INIT} )
+message ( STATUS "CMAKE have pthreads:          " ${CMAKE_USE_PTHREADS_INIT}  )
+message ( STATUS "CMAKE have Win32 pthreads:    " ${CMAKE_USE_WIN32_THREADS_INIT} )
+message ( STATUS "CMAKE have OpenMP:            " ${OPENMP_FOUND} )
 
 #-------------------------------------------------------------------------------
 # find the BLAS
