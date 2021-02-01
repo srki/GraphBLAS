@@ -129,7 +129,7 @@ GrB_Info GB_mxm                     // C<M> = A*B
         Mask_struct, accum, A, B, semiring, A_transpose, B_transpose, flipxy,
         &mask_applied, &done_in_place, AxB_method, &(C->AxB_method_used),
         Context)) ;
-    , "")
+    , "GB_AxB_meta")
 
     if (done_in_place)
     { 

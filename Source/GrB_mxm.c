@@ -49,6 +49,7 @@ GrB_Info GrB_mxm                    // C<M> = accum (C, A*B)
     //--------------------------------------------------------------------------
 
     // C<M> = accum (C,T) where T = A*B, A'*B, A*B', or A'*B'
+    EXEC_INFO_ENTRY(
     info = GB_mxm (
         C,          C_replace,      // C matrix and its descriptor
         M, Mask_comp, Mask_struct,  // mask matrix and its descriptor
@@ -59,7 +60,7 @@ GrB_Info GrB_mxm                    // C<M> = accum (C, A*B)
         false,                      // use fmult(x,y), flipxy false
         AxB_method,                 // algorithm selector
         Context) ;
-
+    , "GB_mxm");
     GB_BURBLE_END ;
     return (info) ;
 }
