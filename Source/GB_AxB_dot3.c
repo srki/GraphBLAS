@@ -144,7 +144,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
         GB_SAME_HYPER_AS (M_is_hyper), M->hyper_ratio, cnvec,
         cnz+1,  // add one to cnz for GB_cumsum of Cwork in GB_AxB_dot3_slice
         true, Context) ;
-    , "");
+    , "GB_create");
     if (info != GrB_SUCCESS)
     {
         // out of memory
@@ -298,7 +298,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
     EXEC_INFO_ENTRY(
     GB_OK (GB_AxB_dot3_slice (&TaskList, &max_ntasks, &ntasks, &nthreads,
     C, Context)) ;
-    ,"")
+    ,"GB_AxB_dot3_slice")
 
     GBBURBLE ("nthreads %d ntasks %d ", nthreads, ntasks) ;
 
