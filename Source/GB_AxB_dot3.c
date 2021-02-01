@@ -74,7 +74,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
     bool B_is_pattern = false ;
 
     if (flipxy)
-    { 
+    {
         // z = fmult (b,a) will be computed
         A_is_pattern = op_is_first  || op_is_pair ;
         B_is_pattern = op_is_second || op_is_pair ;
@@ -84,7 +84,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
             GB_Type_compatible (B->type, mult->xtype))) ;
     }
     else
-    { 
+    {
         // z = fmult (a,b) will be computed
         A_is_pattern = op_is_second || op_is_pair ;
         B_is_pattern = op_is_first  || op_is_pair ;
@@ -139,12 +139,14 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
     int64_t cnz = mnz ;
     int64_t cnvec = mnvec ;
 
+    EXEC_INFO_ENTRY(
     info = GB_create (Chandle, ctype, cvlen, cvdim, GB_Ap_malloc, true,
         GB_SAME_HYPER_AS (M_is_hyper), M->hyper_ratio, cnvec,
         cnz+1,  // add one to cnz for GB_cumsum of Cwork in GB_AxB_dot3_slice
         true, Context) ;
+    , "");
     if (info != GrB_SUCCESS)
-    { 
+    {
         // out of memory
         GB_FREE_ALL ;
         return (info) ;
@@ -173,7 +175,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
     nthreads = GB_nthreads (cnvec, chunk, nthreads_max) ;
     GB_memcpy (Cp, Mp, (cnvec+1) * sizeof (int64_t), nthreads) ;
     if (M_is_hyper)
-    { 
+    {
         GB_memcpy (Ch, Mh, cnvec * sizeof (int64_t), nthreads) ;
     }
     C->magic = GB_MAGIC ;
@@ -185,8 +187,10 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
     //--------------------------------------------------------------------------
 
     nthreads = GB_nthreads (cnz, chunk, nthreads_max) ;
+    EXEC_INFO_ENTRY(
     GB_OK (GB_AxB_dot3_one_slice (&TaskList, &max_ntasks, &ntasks, &nthreads,
         M, Context)) ;
+    , "GB_AxB_dot3_one_slice");
 
     //--------------------------------------------------------------------------
     // phase1: estimate the work to compute each entry in C
@@ -194,6 +198,8 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
 
     // The work to compute C(i,j) is held in Cwork [p], if C(i,j) appears in
     // as the pth entry in C.
+
+    EXEC_INFO_ENTRY_BEGIN()
 
     int taskid ;
     #pragma omp parallel for num_threads(nthreads) schedule(dynamic,1)
@@ -209,7 +215,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
         int64_t klast  = TaskList [taskid].klast ;
         bool fine_task = (klast == -1) ;
         if (fine_task)
-        { 
+        {
             // a fine task operates on a slice of a single vector
             klast = kfirst ;
         }
@@ -258,7 +264,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
                 // be done, but it still takes unit work to flag each C(:,j) as
                 // a zombie
                 for ( ; pM < pM_end ; pM++)
-                { 
+                {
                     Cwork [pM] = 1 ;
                 }
             }
@@ -269,7 +275,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
                 {
                     int64_t work = 1 ;
                     if (GB_mcast (Mx, pM, msize))
-                    { 
+                    {
                         int64_t pA, pA_end, i = Mi [pM] ;
                         GB_lookup (A_is_hyper, Ah, Ap, &apleft, anvec-1, i,
                             &pA, &pA_end) ;
@@ -282,13 +288,17 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
         }
     }
 
+    EXEC_INFO_ENTRY_END("OpenMP region")
+
     //--------------------------------------------------------------------------
     // free the current tasks and construct the tasks for the second phase
     //--------------------------------------------------------------------------
 
     GB_FREE (TaskList) ;
+    EXEC_INFO_ENTRY(
     GB_OK (GB_AxB_dot3_slice (&TaskList, &max_ntasks, &ntasks, &nthreads,
-        C, Context)) ;
+    C, Context)) ;
+    ,"")
 
     GBBURBLE ("nthreads %d ntasks %d ", nthreads, ntasks) ;
 
@@ -319,13 +329,15 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
         // launch the switch factory
         //----------------------------------------------------------------------
 
+        EXEC_INFO_ENTRY_BEGIN_NO_DEF()
         GB_Opcode mult_opcode, add_opcode ;
         GB_Type_code xcode, ycode, zcode ;
         if (GB_AxB_semiring_builtin (A, A_is_pattern, B, B_is_pattern, semiring,
             flipxy, &mult_opcode, &add_opcode, &xcode, &ycode, &zcode))
-        { 
+        {
             #include "GB_AxB_factory.c"
         }
+        EXEC_INFO_ENTRY_END("GB_AxB_semiring_builtin")
 
     #endif
 
@@ -362,15 +374,15 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
 
         GB_cast_function cast_A, cast_B ;
         if (flipxy)
-        { 
+        {
             // A is typecasted to y, and B is typecasted to x
-            cast_A = A_is_pattern ? NULL : 
+            cast_A = A_is_pattern ? NULL :
                      GB_cast_factory (mult->ytype->code, A->type->code) ;
-            cast_B = B_is_pattern ? NULL : 
+            cast_B = B_is_pattern ? NULL :
                      GB_cast_factory (mult->xtype->code, B->type->code) ;
         }
         else
-        { 
+        {
             // A is typecasted to x, and B is typecasted to y
             cast_A = A_is_pattern ? NULL :
                      GB_cast_factory (mult->xtype->code, A->type->code) ;

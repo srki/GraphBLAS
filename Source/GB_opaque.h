@@ -338,6 +338,8 @@ struct GB_Descriptor_opaque // content of GrB_Descriptor
     double chunk ;          // chunk size for # of threads for small problems
     bool predefined ;       // if true, descriptor is predefined
     bool use_mkl ;          // if true, use the Intel MKL
+
+    struct exec_info *exec_info;
 } ;
 
 #endif

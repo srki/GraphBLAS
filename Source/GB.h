@@ -623,6 +623,8 @@ typedef struct
     const char *where ;         // GraphBLAS function where error occurred
     char details [GB_DLEN] ;    // error report
     bool use_mkl ;              // control usage of Intel MKL
+
+    struct exec_info *exec_info;
 }
 GB_Context_struct ;
 

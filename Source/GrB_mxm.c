@@ -42,6 +42,8 @@ GrB_Info GrB_mxm                    // C<M> = accum (C, A*B)
     GB_GET_DESCRIPTOR (info, desc, C_replace, Mask_comp, Mask_struct,
         A_transpose, B_transpose, AxB_method) ;
 
+    Context->exec_info = desc->exec_info;
+
     //--------------------------------------------------------------------------
     // C<M> = accum (C,A*B) and variations, using the mxm kernel
     //--------------------------------------------------------------------------

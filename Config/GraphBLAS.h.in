@@ -3765,7 +3765,9 @@ typedef enum
 
     // SuiteSparse:GraphBLAS extensions are given large values so they do not
     // conflict with future enum values added to the spec:
-    GxB_AxB_METHOD = 1000   // descriptor for selecting C=A*B algorithm
+    GxB_AxB_METHOD = 1000,   // descriptor for selecting C=A*B algorithm
+
+    GxB_EXEC_INFO = 2000
 }
 GrB_Desc_Field ;
 
@@ -8878,6 +8880,82 @@ GrB_Info GxB_mxv_optimize_free      // analyze A for subsequent use in mxv
 (
     GrB_Matrix A                    // input/output matrix
 ) ;
+
+struct exec_info_entry {
+    int line;
+    const char *file;
+
+    const char *name;
+    const char *txt;
+    double time;
+    int depth;
+};
+
+struct exec_info {
+    int num_entries;
+    int depth;
+
+    GrB_Index nnzA;
+    GrB_Index nrowsA;
+    GrB_Index ncolsA;
+
+    GrB_Index nnzB;
+    GrB_Index nrowsB;
+    GrB_Index ncolsB;
+
+    struct exec_info_entry entries[100];
+};
+
+#define HAVE_EXEC_INFO_SUPPORT
+
+#define EXEC_INFO_ENTRY_BEGIN()                                                 \
+    double start;                                                               \
+    int id;                                                                     \
+    if (Context->exec_info) {                                                   \
+        start = omp_get_wtime();                                                \
+        id = Context->exec_info->num_entries++;                                 \
+        Context->exec_info->depth++;                                            \
+    }
+
+#define EXEC_INFO_ENTRY_BEGIN_NO_DEF()                                          \
+    if (Context->exec_info) {                                                   \
+        start = omp_get_wtime();                                                \
+        id = Context->exec_info->num_entries++;                                 \
+        Context->exec_info->depth++;                                            \
+    }
+
+#define EXEC_INFO_ENTRY_END(_TXT)                                               \
+    if (Context->exec_info) {                                                   \
+        Context->exec_info->depth--;                                            \
+        Context->exec_info->entries[id].name = __FUNCTION__;                    \
+        Context->exec_info->entries[id].file = __FILE__;                        \
+        Context->exec_info->entries[id].txt = _TXT;                             \
+        Context->exec_info->entries[id].line = __LINE__;                        \
+        Context->exec_info->entries[id].time = omp_get_wtime() - start;         \
+        Context->exec_info->entries[id].depth = Context->exec_info->depth;      \
+    }
+
+#define EXEC_INFO_ENTRY(_CODE, _TXT)                                            \
+    {                                                                           \
+        if (Context->exec_info) {                                               \
+            double start = omp_get_wtime();                                     \
+            int id = Context->exec_info->num_entries++;                         \
+            Context->exec_info->depth++;                                        \
+            _CODE;                                                              \
+            Context->exec_info->depth--;                                        \
+            Context->exec_info->entries[id].name = __FUNCTION__;                \
+            Context->exec_info->entries[id].file = __FILE__;                    \
+            Context->exec_info->entries[id].txt = _TXT;                         \
+            Context->exec_info->entries[id].line = __LINE__;                    \
+            Context->exec_info->entries[id].time = omp_get_wtime() - start;     \
+            Context->exec_info->entries[id].depth = Context->exec_info->depth;  \
+        } else {                                                                \
+            _CODE                                                               \
+        }                                                                       \
+    }
+
+//#undef EXEC_INFO_ENTRY
+//#define EXEC_INFO_ENTRY(_CODE, _TXT) _CODE;
 
 #endif
 

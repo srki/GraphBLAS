@@ -176,6 +176,15 @@ GrB_Info GxB_Desc_set           // set a parameter in a descriptor
             }
             break ;
 
+        case GxB_EXEC_INFO:
+
+            {
+                va_start (ap, field) ;
+                desc->exec_info = va_arg (ap, struct exec_info*) ;
+                va_end (ap) ;
+            }
+            break ;
+
         default : 
 
             return (GB_ERROR (GrB_INVALID_VALUE, (GB_LOG,

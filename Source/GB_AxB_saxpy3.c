@@ -443,7 +443,10 @@ GrB_Info GB_AxB_saxpy3              // C = A*B using Gustavson+Hash
 
     int64_t Mwork = 0 ;
     int64_t *GB_RESTRICT Bflops = Cp ;  // Cp is used as workspace for Bflops
+
+    EXEC_INFO_ENTRY(
     GB_OK (GB_AxB_flopcount (&Mwork, Bflops, M, Mask_comp, A, B, Context)) ;
+    , "GB_AxB_flopcount");
     int64_t total_flops = Bflops [bnvec] ;
 
     //--------------------------------------------------------------------------
@@ -469,15 +472,20 @@ GrB_Info GB_AxB_saxpy3              // C = A*B using Gustavson+Hash
 
         int nth = GB_nthreads (bnvec, chunk, nthreads_max) ;
         int64_t kk ;
+        EXEC_INFO_ENTRY_BEGIN()                                                 \
         // GB_AxB_flopcount requires Bflops be set to zero here
         #pragma omp parallel for num_threads(nth) schedule(static)
         for (kk = 0 ; kk <= bnvec ; kk++)
         { 
             Bflops [kk] = 0 ;
         }
+        EXEC_INFO_ENTRY_END("OpenMP")
 
         // redo the flop count analysis, without the mask
+        EXEC_INFO_ENTRY_BEGIN_NO_DEF()
         GB_OK (GB_AxB_flopcount (&Mwork, Bflops, NULL, false, A, B, Context)) ;
+        EXEC_INFO_ENTRY_END("GB_AxB_flopcount")
+
         total_flops = Bflops [bnvec] ;
         GBBURBLE ("(discard mask) ") ;
     }
@@ -740,6 +748,8 @@ GrB_Info GB_AxB_saxpy3              // C = A*B using Gustavson+Hash
                             }
                         }
 
+                        EXEC_INFO_ENTRY_BEGIN()
+
                         // count the work for each entry B(k,j).  Do not
                         // include the work to scan M(:,j), since that will
                         // be evenly divided between all tasks in this team.
@@ -770,6 +780,8 @@ GrB_Info GB_AxB_saxpy3              // C = A*B using Gustavson+Hash
                             Bflops2 [s] = fl ;
                             ASSERT (fl >= 0) ;
                         }
+
+                        EXEC_INFO_ENTRY_END("OpenMP")
 
                         // cumulative sum of flops to compute A*B(:,j)
                         GB_cumsum (Bflops2, bjnz, NULL, nth) ;
@@ -1085,8 +1097,10 @@ GrB_Info GB_AxB_saxpy3              // C = A*B using Gustavson+Hash
     // phase1: symbolic analysis
     //==========================================================================
 
+    EXEC_INFO_ENTRY(
     GB_AxB_saxpy3_symbolic (C, M, Mask_comp, Mask_struct, A, B, TaskList,
         ntasks, nfine, nthreads) ;
+    , "GB_AxB_saxpy3_symbolic");
 
     //==========================================================================
     // C = A*B, via saxpy3 method and built-in semiring
@@ -1117,8 +1131,10 @@ GrB_Info GB_AxB_saxpy3              // C = A*B using Gustavson+Hash
         //----------------------------------------------------------------------
 
         if (builtin_semiring)
-        { 
+        {
+            EXEC_INFO_ENTRY_BEGIN()
             #include "GB_AxB_factory.c"
+            EXEC_INFO_ENTRY_END("GB_AxB_factory.c")
         }
 
     #endif
@@ -1130,9 +1146,11 @@ GrB_Info GB_AxB_saxpy3              // C = A*B using Gustavson+Hash
     if (!done)
     { 
         GB_BURBLE_MATRIX (C, "generic ") ;
+        EXEC_INFO_ENTRY(
         info = GB_AxB_saxpy3_generic (C, M, Mask_comp, Mask_struct,
             A, A_is_pattern, B, B_is_pattern, semiring, flipxy,
-            TaskList, ntasks, nfine, nthreads, Context) ;
+            TaskList, ntasks, nfine, nthreads, Context);
+        , "GB_AxB_saxpy3_generic");
     }
 
     if (info != GrB_SUCCESS)

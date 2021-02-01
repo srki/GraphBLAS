@@ -438,34 +438,50 @@ GrB_Info GB_AxB_meta                // C<M>=A*B meta algorithm
         { 
             // C = D*B
             GBBURBLE ("C%s=A'*B, rowscale ", M_str) ;
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_rowscale (Chandle, A, B, semiring, flipxy, Context)) ;
+            , "GB_AxB_rowscale");
         }
         else if (do_colscale)
         { 
             // C = A'*D
             GBBURBLE ("C%s=A'*B, colscale (transposed %s) ", M_str, A_str) ;
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_transpose (&AT, atype_required, true, A,
                 NULL, NULL, NULL, false, Context)) ;
+            , "GB_transpose A");
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_colscale (Chandle, AT, B, semiring, flipxy, Context));
+            , "GB_AxB_colscale");
         }
         else if (do_adotb)
         { 
             // C<M>=A'*B via dot product, or C_in_place<M>+=A'*B if in place
             GBBURBLE ("C%s=A'*B, %sdot_product ", M_str,
                 (M != NULL && !Mask_comp) ? "masked_" : "") ;
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_dot (Chandle, (can_do_in_place) ? C_in_place : NULL,
                 M, Mask_comp, Mask_struct, A, B, semiring, flipxy,
                 mask_applied, done_in_place, Context)) ;
             (*AxB_method_used) = GxB_AxB_DOT ;
+            , "GB_AxB_dot");
         }
         else
         { 
             // C = A'*B via saxpy3: Gustavson + Hash method
             GBBURBLE ("C%s=A'*B, saxpy (transposed %s) ", M_str, A_str) ;
-            GB_OK (GB_transpose (&AT, atype_required, true, A,
+            EXEC_INFO_ENTRY(
+                    GB_OK (GB_transpose (&AT, atype_required, true, A,
                 NULL, NULL, NULL, false, Context)) ;
+            , "GB_transpose A");
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_saxpy3 (Chandle, M, Mask_comp, Mask_struct,
                 AT, B, semiring, flipxy, mask_applied, AxB_method, Context)) ;
+            , "GB_AxB_saxpy3");
             (*AxB_method_used) = GxB_AxB_SAXPY ;
         }
 
@@ -481,38 +497,63 @@ GrB_Info GB_AxB_meta                // C<M>=A*B meta algorithm
         { 
             // C = A*D
             GBBURBLE ("C%s=A*B', colscale ", M_str) ;
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_colscale (Chandle, A, B, semiring, flipxy, Context)) ;
+            , "GB_AxB_colscale");
         }
         else if (M == NULL && GB_is_diagonal (A, Context))
         { 
             // C = D*B'
             GBBURBLE ("C%s=A*B', rowscale (transposed %s) ", M_str, B_str) ;
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_transpose (&BT, btype_required, true, B,
                 NULL, NULL, NULL, false, Context)) ;
+            , "GB_transpose B");
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_rowscale (Chandle, A, BT, semiring, flipxy, Context));
+            , "GB_AxB_rowscale");
         }
         else if (AxB_method == GxB_AxB_DOT)
         { 
             // C<M>=A*B' via dot product, or C_in_place<M>+=A*B' if in place
             GBBURBLE ("C%s=A*B', dot_product (transposed %s) (transposed %s) ",
                 M_str, A_str, B_str) ;
-            GB_OK (GB_transpose (&AT, atype_required, true, A,
+
+            EXEC_INFO_ENTRY(
+                    GB_OK (GB_transpose (&AT, atype_required, true, A,
                 NULL, NULL, NULL, false, Context)) ;
+            , "GB_transpose A");
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_transpose (&BT, btype_required, true, B,
                 NULL, NULL, NULL, false, Context)) ;
+            , " B");
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_dot (Chandle, (can_do_in_place) ? C_in_place : NULL,
                 M, Mask_comp, Mask_struct, AT, BT, semiring, flipxy,
                 mask_applied, done_in_place, Context)) ;
+            , "GB_AxB_dot");
+
             (*AxB_method_used) = GxB_AxB_DOT ;
         }
         else
         { 
             // C = A*B' via saxpy3: Gustavson + Hash method
             GBBURBLE ("C%s=A*B', saxpy (transposed %s) ", M_str, B_str) ;
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_transpose (&BT, btype_required, true, B,
                 NULL, NULL, NULL, false, Context)) ;
+            , "GB_transpose B");
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_saxpy3 (Chandle, M, Mask_comp, Mask_struct,
                 A, BT, semiring, flipxy, mask_applied, AxB_method, Context)) ;
+            , "GB_AxB_saxpy3");
             (*AxB_method_used) = GxB_AxB_SAXPY ;
         }
 
@@ -528,32 +569,44 @@ GrB_Info GB_AxB_meta                // C<M>=A*B meta algorithm
         { 
             // C = A*D, column scale
             GBBURBLE ("C%s=A*B, colscale ", M_str) ;
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_colscale (Chandle, A, B, semiring, flipxy, Context)) ;
+            , "GB_AxB_colscale");
         }
         else if (M == NULL && GB_is_diagonal (A, Context))
         { 
             // C = D*B, row scale
             GBBURBLE ("C%s=A*B, rowscale ", M_str) ;
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_rowscale (Chandle, A, B, semiring, flipxy, Context)) ;
+            , "GB_AxB_rowscale");
         }
         else if (AxB_method == GxB_AxB_DOT)
         { 
             // C<M>=A*B via dot product, or C_in_place<M>+=A*B if in place
             GBBURBLE ("C%s=A*B', dot_product (transposed %s) ", M_str, A_str) ;
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_transpose (&AT, atype_required, true, A,
                 NULL, NULL, NULL, false, Context)) ;
+            , "GB_transpose A");
+
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_dot (Chandle, (can_do_in_place) ? C_in_place : NULL,
                 M, Mask_comp, Mask_struct, AT, B, semiring, flipxy,
                 mask_applied, done_in_place, Context)) ;
+            , "GB_AxB_dot")
             (*AxB_method_used) = GxB_AxB_DOT ;
         }
         else
         { 
             // C = A*B via saxpy3: Gustavson + Hash method
             GBBURBLE ("C%s=A*B, saxpy ", M_str) ;
+            EXEC_INFO_ENTRY(
             GB_OK (GB_AxB_saxpy3 (Chandle, M, Mask_comp, Mask_struct,
                 A, B, semiring, flipxy, mask_applied, AxB_method, Context)) ;
             (*AxB_method_used) = GxB_AxB_SAXPY ;
+            , "GB_AxB_saxpy3");
         }
     }
 

@@ -114,10 +114,22 @@ GrB_Info GB_mxm                     // C<M> = A*B
 
     bool mask_applied = false ;
     bool done_in_place = false ;
+
+    if (Context->exec_info) {
+        Context->exec_info->nnzA = GB_NNZ(A);
+        Context->exec_info->nrowsA = GB_NROWS(A);
+        Context->exec_info->ncolsA = GB_NCOLS(A);
+        Context->exec_info->nnzB = GB_NNZ(B);
+        Context->exec_info->nrowsB = GB_NROWS(B);
+        Context->exec_info->ncolsB = GB_NCOLS(B);
+    }
+
+    EXEC_INFO_ENTRY(
     GB_OK (GB_AxB_meta (&T, C, C_replace, C->is_csc, &MT, M, Mask_comp,
         Mask_struct, accum, A, B, semiring, A_transpose, B_transpose, flipxy,
         &mask_applied, &done_in_place, AxB_method, &(C->AxB_method_used),
         Context)) ;
+    , "")
 
     if (done_in_place)
     { 

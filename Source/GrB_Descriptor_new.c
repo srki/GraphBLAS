@@ -49,6 +49,7 @@ GrB_Info GrB_Descriptor_new     // create a new descriptor
     desc->chunk = GxB_DEFAULT ;         // chunk for auto-tuning of # threads
     desc->use_mkl = false ;        // control usage of Intel MKL
     desc->predefined = false ;     // user-defined
+    desc->exec_info = NULL;
     return (GrB_SUCCESS) ;
 }
 

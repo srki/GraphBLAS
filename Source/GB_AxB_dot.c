@@ -125,8 +125,14 @@ GrB_Info GB_AxB_dot                 // dot product (multiple methods)
         #endif
         {
             // use the CPU
-            return (GB_AxB_dot3 (Chandle, M, Mask_struct, A, B, semiring,
+            GrB_Info info;
+
+            EXEC_INFO_ENTRY(
+            info = (GB_AxB_dot3 (Chandle, M, Mask_struct, A, B, semiring,
                 flipxy, Context)) ;
+            , "GB_AxB_dot3");
+
+            return info;
         }
 
     }
@@ -161,7 +167,13 @@ GrB_Info GB_AxB_dot                 // dot product (multiple methods)
         { 
             GBBURBLE ("dense, C+=A'*B in place ") ;
             (*done_in_place) = true ;
-            return (GB_AxB_dot4 (C_in_place, A, B, semiring, flipxy, Context)) ;
+            GrB_Info info;
+
+            EXEC_INFO_ENTRY(
+            info = (GB_AxB_dot4 (C_in_place, A, B, semiring, flipxy, Context));
+            , "GB_AxB_dot4");
+
+            return info;
         }
 
         //----------------------------------------------------------------------
@@ -186,8 +198,10 @@ GrB_Info GB_AxB_dot                 // dot product (multiple methods)
         if (nthreads == 1)
         {
             // do the entire computation with a single thread
+            EXEC_INFO_ENTRY(
             info = GB_AxB_dot2 (Chandle, M, Mask_struct, &A, B, semiring,
                 flipxy, mask_applied, 1, 1, 1, NULL) ;
+            , "GB_AxB_dot2");
             if (info == GrB_SUCCESS)
             { 
                 ASSERT_MATRIX_OK (*Chandle, "C for sequential A*B", GB0) ;
@@ -244,14 +258,18 @@ GrB_Info GB_AxB_dot                 // dot product (multiple methods)
         // construct each slice of A'
         //----------------------------------------------------------------------
 
+        EXEC_INFO_ENTRY(
         GB_OK (GB_slice (A, naslice, Slice, Aslice, Context)) ;
+        , "GB_slice");
 
         //----------------------------------------------------------------------
         // compute each slice of C = A'*B or C<!M> = A'*B
         //----------------------------------------------------------------------
 
+        EXEC_INFO_ENTRY(
         GB_OK (GB_AxB_dot2 (Chandle, M, Mask_struct, Aslice, B, semiring,
             flipxy, mask_applied, nthreads, naslice, nbslice, Context)) ;
+        , "GB_AxB_dot2");
 
         //----------------------------------------------------------------------
         // free workspace and return result
