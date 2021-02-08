@@ -472,19 +472,19 @@ GrB_Info GB_AxB_saxpy3              // C = A*B using Gustavson+Hash
 
         int nth = GB_nthreads (bnvec, chunk, nthreads_max) ;
         int64_t kk ;
-        EXEC_INFO_ENTRY_BEGIN()                                                 \
+        EXEC_INFO_ENTRY_BEGIN("OpenMP")                                                 \
         // GB_AxB_flopcount requires Bflops be set to zero here
         #pragma omp parallel for num_threads(nth) schedule(static)
         for (kk = 0 ; kk <= bnvec ; kk++)
         { 
             Bflops [kk] = 0 ;
         }
-        EXEC_INFO_ENTRY_END("OpenMP")
+        EXEC_INFO_ENTRY_END()
 
         // redo the flop count analysis, without the mask
-        EXEC_INFO_ENTRY_BEGIN_NO_DEF()
+        EXEC_INFO_ENTRY_BEGIN_NO_DEF("GB_AxB_flopcount")
         GB_OK (GB_AxB_flopcount (&Mwork, Bflops, NULL, false, A, B, Context)) ;
-        EXEC_INFO_ENTRY_END("GB_AxB_flopcount")
+        EXEC_INFO_ENTRY_END()
 
         total_flops = Bflops [bnvec] ;
         GBBURBLE ("(discard mask) ") ;
@@ -748,7 +748,7 @@ GrB_Info GB_AxB_saxpy3              // C = A*B using Gustavson+Hash
                             }
                         }
 
-                        EXEC_INFO_ENTRY_BEGIN()
+                        EXEC_INFO_ENTRY_BEGIN("OpenMP")
 
                         // count the work for each entry B(k,j).  Do not
                         // include the work to scan M(:,j), since that will
@@ -781,7 +781,7 @@ GrB_Info GB_AxB_saxpy3              // C = A*B using Gustavson+Hash
                             ASSERT (fl >= 0) ;
                         }
 
-                        EXEC_INFO_ENTRY_END("OpenMP")
+                        EXEC_INFO_ENTRY_END()
 
                         // cumulative sum of flops to compute A*B(:,j)
                         GB_cumsum (Bflops2, bjnz, NULL, nth) ;
@@ -1132,9 +1132,9 @@ GrB_Info GB_AxB_saxpy3              // C = A*B using Gustavson+Hash
 
         if (builtin_semiring)
         {
-            EXEC_INFO_ENTRY_BEGIN()
+            EXEC_INFO_ENTRY_BEGIN("GB_AxB_factory.c")
             #include "GB_AxB_factory.c"
-            EXEC_INFO_ENTRY_END("GB_AxB_factory.c")
+            EXEC_INFO_ENTRY_END()
         }
 
     #endif

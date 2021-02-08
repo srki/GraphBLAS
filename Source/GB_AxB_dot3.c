@@ -199,7 +199,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
     // The work to compute C(i,j) is held in Cwork [p], if C(i,j) appears in
     // as the pth entry in C.
 
-    EXEC_INFO_ENTRY_BEGIN()
+    EXEC_INFO_ENTRY_BEGIN("OpenMP region")
 
     int taskid ;
     #pragma omp parallel for num_threads(nthreads) schedule(dynamic,1)
@@ -288,7 +288,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
         }
     }
 
-    EXEC_INFO_ENTRY_END("OpenMP region")
+    EXEC_INFO_ENTRY_END()
 
     //--------------------------------------------------------------------------
     // free the current tasks and construct the tasks for the second phase
@@ -329,7 +329,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
         // launch the switch factory
         //----------------------------------------------------------------------
 
-        EXEC_INFO_ENTRY_BEGIN_NO_DEF()
+        EXEC_INFO_ENTRY_BEGIN_NO_DEF("GB_AxB_semiring_builtin")
         GB_Opcode mult_opcode, add_opcode ;
         GB_Type_code xcode, ycode, zcode ;
         if (GB_AxB_semiring_builtin (A, A_is_pattern, B, B_is_pattern, semiring,
@@ -337,7 +337,7 @@ GrB_Info GB_AxB_dot3                // C<M> = A'*B using dot product method
         {
             #include "GB_AxB_factory.c"
         }
-        EXEC_INFO_ENTRY_END("GB_AxB_semiring_builtin")
+        EXEC_INFO_ENTRY_END()
 
     #endif
 

@@ -8888,6 +8888,7 @@ struct exec_info_entry {
     const char *name;
     const char *txt;
     double time;
+    double children_time;
     int depth;
 };
 
@@ -8908,50 +8909,34 @@ struct exec_info {
 
 #define HAVE_EXEC_INFO_SUPPORT
 
-#define EXEC_INFO_ENTRY_BEGIN()                                                 \
-    double start;                                                               \
-    int id;                                                                     \
+#define EXEC_INFO_ENTRY_BEGIN_NO_DEF(_TXT)                                      \
     if (Context->exec_info) {                                                   \
         start = omp_get_wtime();                                                \
         id = Context->exec_info->num_entries++;                                 \
-        Context->exec_info->depth++;                                            \
-    }
-
-#define EXEC_INFO_ENTRY_BEGIN_NO_DEF()                                          \
-    if (Context->exec_info) {                                                   \
-        start = omp_get_wtime();                                                \
-        id = Context->exec_info->num_entries++;                                 \
-        Context->exec_info->depth++;                                            \
-    }
-
-#define EXEC_INFO_ENTRY_END(_TXT)                                               \
-    if (Context->exec_info) {                                                   \
-        Context->exec_info->depth--;                                            \
         Context->exec_info->entries[id].name = __FUNCTION__;                    \
         Context->exec_info->entries[id].file = __FILE__;                        \
-        Context->exec_info->entries[id].txt = _TXT;                             \
         Context->exec_info->entries[id].line = __LINE__;                        \
-        Context->exec_info->entries[id].time = omp_get_wtime() - start;         \
+        Context->exec_info->entries[id].txt = _TXT;                             \
         Context->exec_info->entries[id].depth = Context->exec_info->depth;      \
+        Context->exec_info->depth++;                                            \
+    }
+
+#define EXEC_INFO_ENTRY_BEGIN(_TXT)                                             \
+    double start;                                                               \
+    int id;                                                                     \
+    EXEC_INFO_ENTRY_BEGIN_NO_DEF(_TXT)
+
+#define EXEC_INFO_ENTRY_END()                                                   \
+    if (Context->exec_info) {                                                   \
+        Context->exec_info->depth--;                                            \
+        Context->exec_info->entries[id].time = omp_get_wtime() - start;         \
     }
 
 #define EXEC_INFO_ENTRY(_CODE, _TXT)                                            \
     {                                                                           \
-        if (Context->exec_info) {                                               \
-            double start = omp_get_wtime();                                     \
-            int id = Context->exec_info->num_entries++;                         \
-            Context->exec_info->depth++;                                        \
-            _CODE;                                                              \
-            Context->exec_info->depth--;                                        \
-            Context->exec_info->entries[id].name = __FUNCTION__;                \
-            Context->exec_info->entries[id].file = __FILE__;                    \
-            Context->exec_info->entries[id].txt = _TXT;                         \
-            Context->exec_info->entries[id].line = __LINE__;                    \
-            Context->exec_info->entries[id].time = omp_get_wtime() - start;     \
-            Context->exec_info->entries[id].depth = Context->exec_info->depth;  \
-        } else {                                                                \
-            _CODE                                                               \
-        }                                                                       \
+        EXEC_INFO_ENTRY_BEGIN(_TXT)                                             \
+        _CODE                                                                   \
+        EXEC_INFO_ENTRY_END()                                                   \
     }
 
 //#undef EXEC_INFO_ENTRY

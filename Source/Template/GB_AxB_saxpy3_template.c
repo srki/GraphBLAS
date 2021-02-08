@@ -82,7 +82,7 @@
 
     // Coarse tasks: nothing to do in phase2.
     // Fine tasks: compute nnz (C(:,j)), and values in Hx via atomics.
-
+    EXEC_INFO_ENTRY_BEGIN("Parallel region");
     int taskid ;
     #pragma omp parallel for num_threads(nthreads) schedule(dynamic,1)
     for (taskid = 0 ; taskid < nfine ; taskid++)
@@ -638,6 +638,7 @@
             }
         }
     }
+    EXEC_INFO_ENTRY_END();
 
     //==========================================================================
     // phase3/phase4: count nnz(C(:,j)) for fine tasks, cumsum of Cp
@@ -687,6 +688,7 @@
 
     #endif
 
+    EXEC_INFO_ENTRY_BEGIN_NO_DEF("Parallel region")
     #pragma omp parallel for num_threads(nthreads) schedule(dynamic,1)
     for (taskid = 0 ; taskid < ntasks ; taskid++)
     {
@@ -1280,6 +1282,7 @@
             }
         }
     }
+    EXEC_INFO_ENTRY_END();
 
     //==========================================================================
     // phase6: final gather phase for fine hash tasks
@@ -1326,7 +1329,7 @@
                 GB_msort_1 (Ci + Cp [kk], W, cjnz, nth) ;
 
                 #if !GB_IS_ANY_PAIR_SEMIRING
-
+                    EXEC_INFO_ENTRY_BEGIN_NO_DEF("Parallel region");
                     GB_CTYPE *GB_RESTRICT Hx =
                         (GB_CTYPE *) TaskList [taskid].Hx ;
                     // gather the values of C(:,j)
@@ -1347,6 +1350,7 @@
                             }
                         }
                     }
+                    EXEC_INFO_ENTRY_END();
 
                 #endif
             }
